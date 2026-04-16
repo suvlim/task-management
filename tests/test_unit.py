@@ -9,6 +9,7 @@ from app.service import (
     delete_task, 
     get_project_with_tasks,
     get_tasks_by_project,
+    update_task_status
 )
 
 # ======================PROYEK==========================================
@@ -142,6 +143,19 @@ def test_get_tasks_by_project_success():
         assert tasks[1]["title"] == "Task 2"
         assert tasks[0]["status"] == "TODO"
         assert tasks[1]["status"] == "ONGOING"
+
+# PERUBAHAN STATUS TUGAS
+# T-1 Test Perubahan Status Valid
+def test_update_status_valid():
+    with patch('app.service.get_connection') as mock_get_conn:
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = ("ONGOING",)
+        mock_conn.cursor.return_value = mock_cursor
+        mock_get_conn.return_value = mock_conn
+
+        result = update_task_status(5, "REVIEW")
+        assert result["status"] == "REVIEW"
 
 # PENGHAPUSAN TUGAS
 # T-1 Test Penghapusan Tugas
