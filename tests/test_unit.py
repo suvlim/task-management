@@ -4,6 +4,9 @@ from app.service import (
     create_project,
     get_projects,
     delete_project,
+    create_task, 
+    get_tasks,
+    delete_task, 
 )
 
 # ======================PROYEK==========================================
@@ -63,3 +66,51 @@ def test_delete_project_success():
         result = delete_project(3)
         assert result is True
     
+# ======================TUGAS==========================================
+# PEMBUATAN TUGAS
+# T-1 Test Pembuatan Tugas Valid
+def test_create_task_success():
+    with patch('app.service.get_connection') as mock_get_conn:
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (1,) 
+        mock_cursor.lastrowid = 42
+        mock_conn.cursor.return_value = mock_cursor
+        mock_get_conn.return_value = mock_conn
+
+        task = create_task("Belajar CI", 1)
+        assert task["title"] == "Belajar CI"
+        assert task["status"] == "TODO"
+
+# PENGAMBILAN TUGAS
+# T-1 Test Pengambilan Semua Tugas Valid
+def test_get_tasks():
+    with patch('app.service.get_connection') as mock_get_conn:
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchall.return_value = [
+            (1, "Task A", "TODO"),
+            (2, "Task B", "COMPLETE")
+        ]
+        mock_conn.cursor.return_value = mock_cursor
+        mock_get_conn.return_value = mock_conn
+
+        tasks = get_tasks()
+        assert len(tasks) == 2
+        assert tasks[0]["title"] == "Task A"
+        assert tasks[1]["title"] == "Task B"
+        assert tasks[0]["status"] == "TODO"
+        assert tasks[1]["status"] == "COMPLETE"
+
+# PENGHAPUSAN TUGAS
+# T-1 Test Penghapusan Tugas
+def test_delete_task_success():
+    with patch('app.service.get_connection') as mock_get_conn:
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.rowcount = 1
+        mock_conn.cursor.return_value = mock_cursor
+        mock_get_conn.return_value = mock_conn
+
+        assert delete_task(10) is True
+
