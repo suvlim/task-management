@@ -1,5 +1,23 @@
 from app.database import get_connection
 
+VALID_STATUS = [
+    "TODO",
+    "ONGOING",
+    "REVIEW",
+    "REVISION",
+    "COMPLETE",
+    "CANCELLED"
+]
+
+VALID_TRANSITIONS = {
+    "TODO": ["ONGOING", "CANCELLED"],
+    "ONGOING": ["REVIEW", "CANCELLED"],
+    "REVIEW": ["COMPLETE", "REVISION"],
+    "REVISION": ["ONGOING", "CANCELLED"],
+    "COMPLETE": [],
+    "CANCELLED": []
+}
+
 
 # Buat Proyek
 def create_project(name, description=""):
@@ -58,6 +76,72 @@ def delete_project(project_id):
     if cursor.rowcount == 0:
         conn.close()
         raise ValueError("Project not found")
+
+    conn.commit()
+    conn.close()
+
+    return True
+
+# Buat Tugas 
+def create_task(title, project_id):
+    # Validasi Input (Judul Tidak Kosong)
+    if not title or title.strip() == "":
+        raise ValueError("Title cannot be empty")
+    # Validasi Proyek (Tidak Kosong & Terdaftar)
+    if not project_id or project_id <= 0:
+        raise ValueError("Valid project_id is required")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+ 
+    cursor.execute("SELECT id FROM projects WHERE id = ?", (project_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise ValueError("Project not found")
+
+    cursor.execute(
+        "INSERT INTO tasks (title, status, project_id) VALUES (?, ?, ?)",
+        (title.strip(), "TODO", project_id)
+    )
+
+    conn.commit()
+    task_id = cursor.lastrowid
+    conn.close()
+
+    return {
+        "id": task_id,
+        "title": title.strip(),
+        "status": "TODO",
+        "project_id": project_id
+    }
+
+# Ambil Semua Tugas
+def get_tasks():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, title, status FROM tasks")
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {"id": row[0], "title": row[1], "status": row[2]}
+        for row in rows
+    ]
+
+
+# Hapus Tugas
+def delete_task(task_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+
+    # Pengecekan Keberadaan Tugas Yang Di-hapus
+    if cursor.rowcount == 0:
+        conn.close()
+        raise ValueError("Task not found")
 
     conn.commit()
     conn.close()
