@@ -12,8 +12,8 @@ VALID_STATUS = [
 VALID_TRANSITIONS = {
     "TODO": ["ONGOING", "CANCELLED"],
     "ONGOING": ["REVIEW", "CANCELLED"],
-    "REVIEW": ["COMPLETE", "REVISION"],
-    "REVISION": ["ONGOING", "CANCELLED"],
+    "REVIEW": ["COMPLETE", "REVISION", "CANCELLED"],
+    "REVISION": ["ONGOING"],
     "COMPLETE": [],
     "CANCELLED": []
 }
@@ -176,6 +176,49 @@ def get_tasks_by_project(project_id):
         for row in rows
     ]
 
+# Update Status Tugas 
+def update_task_status(task_id, status):
+    # Validasi status (Ada Pada Status yang Disediakan)
+    if status not in VALID_STATUS:
+        raise ValueError("Invalid status")
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT status FROM tasks WHERE id = ?", (task_id,))
+    row = cursor.fetchone()
+
+    # Pengecekan Keberadaan Tugas Yang Di-update
+    if not row:
+        conn.close()
+        raise ValueError("Task not found")
+
+    current_status = row[0]
+
+    # Validasi transisi status
+    allowed_next = VALID_TRANSITIONS[current_status]
+
+    if status not in allowed_next:
+        conn.close()
+        # Ubah Semua Kemungkinan Perubahan Status yang Diizinkan ke String
+        allowed_status = " or ".join(allowed_next)
+
+        raise ValueError(
+            f"{current_status} tasks can only be set to {allowed_status}"
+        )
+    
+    cursor.execute(
+        "UPDATE tasks SET status = ? WHERE id = ?",
+        (status, task_id)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "id": task_id,
+        "status": status
+    }
 
 # Hapus Tugas
 def delete_task(task_id):
