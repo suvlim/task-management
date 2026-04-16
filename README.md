@@ -106,7 +106,7 @@ pytest tests/ --cov=app --cov-report=html
 htmlcov/index.html
 </pre>
 
-<h2>4. Strategi Pengujian</h2>
+<h2>Strategi Pengujian</h2>
 
 <h3>Unit Testing</h3>
 <p>
