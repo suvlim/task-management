@@ -55,6 +55,34 @@ def get_projects():
         for row in rows
     ]
 
+# Ambil Proyek dan Tugas Terkait
+def get_project_with_tasks(project_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT id, name, description FROM projects WHERE id = ?", (project_id,))
+    project = cursor.fetchone()
+    if not project:
+        conn.close()
+        raise ValueError("Project not found")
+    
+    cursor.execute("""
+        SELECT id, title, status 
+        FROM tasks 
+        WHERE project_id = ? 
+        ORDER BY id
+    """, (project_id,))
+    tasks = cursor.fetchall()
+    
+    conn.close()
+    
+    return {
+        "id": project[0],
+        "name": project[1],
+        "description": project[2],
+        "tasks": [{"id": t[0], "title": t[1], "status": t[2]} for t in tasks]
+    }
+
 # Hapus Proyek
 def delete_project(project_id):
 
@@ -121,6 +149,24 @@ def get_tasks():
     cursor = conn.cursor()
 
     cursor.execute("SELECT id, title, status FROM tasks")
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {"id": row[0], "title": row[1], "status": row[2]}
+        for row in rows
+    ]
+
+# Ambil Tugas Berdasarkan Proyek
+def get_tasks_by_project(project_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id, title, status FROM tasks WHERE project_id = ? ORDER BY id",
+        (project_id,)
+    )
 
     rows = cursor.fetchall()
     conn.close()
