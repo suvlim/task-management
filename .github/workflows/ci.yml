@@ -17,6 +17,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Build Application
         run: |
-          pytest
+          python -c "from app.database import init_db; init_db()"
+          echo "Build Application successful"
+
+      - name: Run tests with Coverage
+        run: |
+          pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing --cov-fail-under=60
+
+      - name: Generate HTML Coverage Report
+        run: |
+          pytest tests/ --cov=app --cov-report=html
+
+      - name: Upload coverage report (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/

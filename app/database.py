@@ -21,6 +21,18 @@ def init_db():
     """)
 
     
+    cursor.execute("""               
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            status TEXT NOT NULL,
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+        )
+                   
+    """)
+
+    
 
     conn.commit()
     conn.close()
